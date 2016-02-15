@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request, url_for
+from flask import Flask, render_template, request, url_for, send_from_directory
 import json
 import xmltodict
 from run import wechat
+import os, time
 
 app = Flask(__name__)
 
@@ -21,6 +22,9 @@ class User:
   def get_nickname(self):
     return self._user_info.get('nickname')
 
+  def __repr__(self):
+    return json.dumps(self, default=lambda o: o.__dict__)
+
 
 class WechatData:
   def __init__(self, raw_data):
@@ -29,23 +33,23 @@ class WechatData:
   def __str__(self):
     return str(self._data)
 
-  def getEvent(self):
+  def get_event(self):
     try:
       return self._data['xml']['Event']
     except KeyError:
       return None
 
-  def getMsgType(self):
+  def get_msg_type(self):
     try:
       return self._data['xml']['MsgType']
     except KeyError:
       return None
 
   def is_subscribe_event(self):
-    return self.getEvent() == 'subscribe' and self.getMsgType() == 'event'
+    return self.get_event() == 'subscribe' and self.get_msg_type() == 'event'
 
   def is_text_msg(self):
-    return self.getMsgType() == 'text'
+    return self.get_msg_type() == 'text'
 
   def get_from_user_name(self):
     try:
@@ -53,10 +57,15 @@ class WechatData:
     except KeyError:
       return None
 
+  def get_content(self):
+    try:
+      return self._data['xml']['Content']
+    except KeyError:
+      return None
 
 class UserManager:
   def __init__(self):
-    # Map from user id to UserData
+    # Map from user id to User
     self._all_users = {}
 
   def has_user(self, user_id):
@@ -74,12 +83,28 @@ class UserManager:
     return self._all_users.get(user_id)
 
 
+class Reservation(dict):
+  def __init__(self, user_id, time_to_reserve, num_guest):
+    self['_reserver'] = user_id
+    self['_checkin_time'] = time_to_reserve
+    self['_num_guest'] = num_guest
+    self['_timestamp'] = time.time()
+
 user_manager = UserManager()
 
+queue = []
+
+def add_to_reservation(user_id, num_guest):
+  queue.append(Reservation(user_id, time.time(), num_guest))
 
 @app.route("/")
-def hello():
-  return "Hello World!"
+def root():
+  return send_from_directory('html', 'index.html')
+
+
+@app.route("/<path:path>")
+def hello(path):
+  return send_from_directory('html', path)
 
 
 @app.route("/verify", methods=['POST', 'GET'])
@@ -101,11 +126,23 @@ def verify():
 
 
   if wechat.check_signature(signature=signature, timestamp=timestamp, nonce=nonce):
-    user_manager.process_user(data.get_from_user_name())
+    user_id = data.get_from_user_name()
+    user_manager.process_user(user_id)
 
     if data.is_text_msg():
-      user = user_manager.get_user(data.get_from_user_name())
-      wechat.send_text_message(user.get_id(), "hello there, {}".format(user.get_nickname()))
+      user = user_manager.get_user(user_id)
+      # wechat.send_text_message(user.get_id(), "hello there, {}".format(user.get_nickname()))
+
+      num_guest = None
+      try:
+        num_guest = int(data.get_content())
+      except ValueError:
+        pass
+
+      if num_guest:
+        add_to_reservation(user.get_id(), num_guest)
+
+      print data.get_content()
 
     if echostr is not None:
       return echostr
@@ -113,6 +150,11 @@ def verify():
       return ""
   else:
     return "fail"
+
+@app.route('/api/reservations/', methods=['GET'])
+def reservations():
+  print queue
+  return json.dumps(queue)
 
 
 @app.route('/message/', methods=['POST'])
