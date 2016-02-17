@@ -1,7 +1,6 @@
 # wechat_app
 
 * pip install virtualenv
-* virtualenv venv
 * virtualenv -p /usr/bin/python2.7 venv
 * source venv/bin/activate
 
