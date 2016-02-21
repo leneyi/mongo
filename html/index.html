@@ -9,7 +9,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Simple Sidebar - Start Bootstrap Template</title>
+    <title>排位助手</title>
 
     <!-- Bootstrap Core CSS -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
@@ -147,19 +147,41 @@
 </script>
 <!-- Menu Toggle Script -->
 <script>
+    edit_row_prefix = 'edit_';
+
     $("#menu-toggle").click(function (e) {
         e.preventDefault();
         $("#wrapper").toggleClass("toggled");
     });
 
-    function reservation_row_onclick(){
-        var user_id = $(this).attr('id')
-        var tr = $('<tr>').append(
-                $('<td>').text(item.reserver.user_info.nickname),
-                $('<td>').text(item.num_guest),
-                $('<td>').text(myDate.toLocaleString())
-        );        $(this).after(another_row)
+    function reservation_row_onclick() {
+        // Need to be reservation_id
+        var user_id = $(this).attr('id');
+        var existing_edit_row = $(".edit_row");
+        if (existing_edit_row.length > 0) {
+            existing_edit_row.remove();
+        }
+        if ($("#" + edit_row_prefix + user_id).length > 0) {
+            return;
+        }
+
+        var button_del = $('<button>')
+                .text("删除")
+                .attr('class', 'btn-danger btn btn-group-sm')
+                .attr('id', user_id)
+                .click(remove_reservation);
+        var button_edit = $('<button>').text("更改").attr('class', 'btn-primary btn btn-group-sm').attr('id', user_id);
+
+        var edit_row = $('<tr>')
+                .append(button_edit, button_del)
+                .attr('id', edit_row_prefix + user_id)
+                .addClass('edit_row');
+        $(this).after(edit_row)
         console.log(user_id)
+    }
+
+    function remove_reservation(){
+        console.log($(this).attr('id'))
     }
 
 

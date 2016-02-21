@@ -1,3 +1,5 @@
+import hashlib
+
 from flask import Flask, render_template, request, url_for, send_from_directory
 import json
 import xmltodict
@@ -75,12 +77,14 @@ class UserManager(object):
   def get_user(self, user_id):
     return self._all_users.get(user_id)
 
+
 class Reservation(object):
   def __init__(self, user_id, time_to_reserve, num_guest):
     self.reserver = user_manager.get_user(user_id)
     self.checkin_time = time_to_reserve
     self.num_guest = num_guest
     self.timestamp = time.time()
+    # self.id = hashlib.sha1("{}{}{}".format(user_id, time_to_reserve, num_guest)).hexdigest()
 
 
 user_manager = UserManager()
@@ -149,6 +153,10 @@ def reservations():
   print queue
   return json.dumps(queue,default=lambda obj:obj.__dict__)
 
+@app.route('/api/reservations/delete', methods=['POST'])
+def reservations():
+  print queue
+  return json.dumps(queue,default=lambda obj:obj.__dict__)
 
 @app.route('/message/', methods=['POST'])
 def message():
