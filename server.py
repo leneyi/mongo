@@ -1,24 +1,34 @@
 import hashlib
-
 from flask import Flask, render_template, request, url_for, send_from_directory
 import json
 import xmltodict
 from run import wechat
 import os, time
+from server import *
+from jsonInDB import *
+from bson.objectid import ObjectId
+import pprint
 
 app = Flask(__name__)
 
 
-class User(object):
-  def __init__(self, id, **kwargs):
-    # super(User, self).__init__(**kwargs)
-    self.user_info = wechat.get_user_info(id)
+class User(dict):
+  def __init__(self, id=None, data=None):
+    super(User, self).__init__()
+    if id:
+      self.update(wechat.get_user_info(id))
+    elif data:
+      self.update(data)
+      self['_id'] = str(self['_id'])
+
+    else:
+      raise ValueError("not value to initiate user")
 
   def get_id(self):
-    return self.id
+    return self['openid']
 
   def get_nickname(self):
-    return self.user_info.get('nickname')
+    return self['nickname']
 
 
 class WechatData(object):
@@ -58,6 +68,7 @@ class WechatData(object):
     except KeyError:
       return None
 
+
 class UserManager(object):
   def __init__(self):
     # Map from user id to User
@@ -70,9 +81,12 @@ class UserManager(object):
     if not self.has_user(user_id):
       self._all_users[user_id] = User(user_id)
 
-  def process_user(self, user_id):
+  def process_new_user(self, user_id):
     if user_id not in self._all_users:
-      self._all_users[user_id] = User(user_id)
+      self._all_users[user_id] = User(id=user_id)
+
+  def process_existing_user(self, user):
+    self._all_users[user.get_id()] = user
 
   def get_user(self, user_id):
     return self._all_users.get(user_id)
@@ -91,8 +105,10 @@ user_manager = UserManager()
 
 queue = []
 
+
 def add_to_reservation(user_id, num_guest):
   queue.append(Reservation(user_id, time.time(), num_guest))
+
 
 @app.route("/")
 def root():
@@ -124,7 +140,7 @@ def verify():
 
   if wechat.check_signature(signature=signature, timestamp=timestamp, nonce=nonce):
     user_id = data.get_from_user_name()
-    user_manager.process_user(user_id)
+    user_manager.process_new_user(user_id)
 
     if data.is_text_msg():
       user = user_manager.get_user(user_id)
@@ -148,15 +164,14 @@ def verify():
   else:
     return "fail"
 
+
 @app.route('/api/reservations/', methods=['GET'])
 def reservations():
   print queue
-  return json.dumps(queue,default=lambda obj:obj.__dict__)
+  return json.dumps(queue, default=lambda obj: obj.__dict__)
 
-@app.route('/api/reservations/delete', methods=['POST'])
-def reservations():
-  print queue
-  return json.dumps(queue,default=lambda obj:obj.__dict__)
+
+# }
 
 @app.route('/message/', methods=['POST'])
 def message():
@@ -167,9 +182,20 @@ def message():
 
 
 if __name__ == "__main__":
-  user_manager.process_user("odIgav434SsjB4x8ROU7BJWzI5IU")
-  user_manager.process_user("odIgav6fGLauJA1ukAtV_lGWWCPY")
-  user_manager.process_user("odIgavz5qd3QrLSHyK5nefTgyIH4")
+  user_ids = ["odIgav434SsjB4x8ROU7BJWzI5IU", "odIgav6fGLauJA1ukAtV_lGWWCPY", "odIgavz5qd3QrLSHyK5nefTgyIH4"]
+  for user_id in user_ids:
+    user_data = db.user.find_one({'openid': user_id})
+    if user_data is not None:
+      user = User(data=user_data)
+      user_manager.process_existing_user(user)
+    else:
+      user_manager.process_new_user(user_id)
+      user = user_manager.get_user(user_id)
+      db.user.save(user)
+
+  # user_manager.process_new_user("odIgav434SsjB4x8ROU7BJWzI5IU")
+  # user_manager.process_new_user("odIgav6fGLauJA1ukAtV_lGWWCPY")
+  # user_manager.process_new_user("odIgavz5qd3QrLSHyK5nefTgyIH4")
 
   add_to_reservation("odIgav434SsjB4x8ROU7BJWzI5IU", 1)
   add_to_reservation("odIgav6fGLauJA1ukAtV_lGWWCPY", 2)

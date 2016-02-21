@@ -134,11 +134,11 @@
             var item = data[i];
             var myDate = new Date(item.timestamp * 1000);
             var tr = $('<tr>').append(
-                    $('<td>').text(item.reserver.user_info.nickname),
+                    $('<td>').text(item.reserver.nickname),
                     $('<td>').text(item.num_guest),
                     $('<td>').text(myDate.toLocaleString())
             );
-            tr.attr("id", item.reserver.user_info.openid);
+            tr.attr("id", item.reserver.openid);
             tr.click(reservation_row_onclick)
             $("#queue_table > tbody").append(tr);
         }
