@@ -1,15 +1,16 @@
-import hashlib
-from flask import Flask, render_template, request, url_for, send_from_directory
-import json
+import os
+import time
+
 import xmltodict
-from run import wechat
-import os, time
-from server import *
+from flask import Flask, request, send_from_directory
+
 from jsonInDB import *
-from bson.objectid import ObjectId
-import pprint
+from run import wechat
 
 app = Flask(__name__)
+
+root_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../..')
+print root_dir
 
 
 class User(dict):
@@ -112,12 +113,14 @@ def add_to_reservation(user_id, num_guest):
 
 @app.route("/")
 def root():
-  return send_from_directory('html', 'index.html')
+  dir = os.path.join(root_dir, 'src/main/html')
+  return send_from_directory(dir, 'index.html')
 
 
 @app.route("/<path:path>")
 def hello(path):
-  return send_from_directory('html', path)
+  dir = os.path.join(root_dir, 'src/main/html')
+  return send_from_directory(dir, path)
 
 
 @app.route("/verify", methods=['POST', 'GET'])
@@ -128,15 +131,6 @@ def verify():
   echostr = request.args.get('echostr')
 
   data = WechatData(request.data)
-  # print data
-
-
-  # if data.is_subscribe_event():
-  #   print "subscribe!"
-  #   if data.get_from_user_name() is not None:
-  #     all_users.add(User(data.get('FromUserName')))
-  #     print all_users
-
 
   if wechat.check_signature(signature=signature, timestamp=timestamp, nonce=nonce):
     user_id = data.get_from_user_name()
@@ -171,8 +165,6 @@ def reservations():
   return json.dumps(queue, default=lambda obj: obj.__dict__)
 
 
-# }
-
 @app.route('/message/', methods=['POST'])
 def message():
   data = xmltodict.parse(request.data)
@@ -193,13 +185,7 @@ if __name__ == "__main__":
       user = user_manager.get_user(user_id)
       db.user.save(user)
 
-  # user_manager.process_new_user("odIgav434SsjB4x8ROU7BJWzI5IU")
-  # user_manager.process_new_user("odIgav6fGLauJA1ukAtV_lGWWCPY")
-  # user_manager.process_new_user("odIgavz5qd3QrLSHyK5nefTgyIH4")
-
-  add_to_reservation("odIgav434SsjB4x8ROU7BJWzI5IU", 1)
-  add_to_reservation("odIgav6fGLauJA1ukAtV_lGWWCPY", 2)
-  add_to_reservation("odIgavz5qd3QrLSHyK5nefTgyIH4", 3)
+    add_to_reservation(user_id, 2)
 
   app.run('0.0.0.0', 5000, debug=True)
 
