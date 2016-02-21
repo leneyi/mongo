@@ -7,26 +7,19 @@ import os, time
 app = Flask(__name__)
 
 
-class User:
-  def __init__(self, id):
-    self._id = id
-    # print wechat.get_user_info(id)
-    # self._user_info = json.load(wechat.get_user_info(id))
-    self._user_info = wechat.get_user_info(id)
-    # print self._user_info
-    # print "type: {}".format(type(self._user_info))
+class User(object):
+  def __init__(self, id, **kwargs):
+    # super(User, self).__init__(**kwargs)
+    self.user_info = wechat.get_user_info(id)
 
   def get_id(self):
-    return self._id
+    return self.id
 
   def get_nickname(self):
-    return self._user_info.get('nickname')
-
-  def __repr__(self):
-    return json.dumps(self, default=lambda o: o.__dict__)
+    return self.user_info.get('nickname')
 
 
-class WechatData:
+class WechatData(object):
   def __init__(self, raw_data):
     self._data = xmltodict.parse(raw_data)
 
@@ -63,7 +56,7 @@ class WechatData:
     except KeyError:
       return None
 
-class UserManager:
+class UserManager(object):
   def __init__(self):
     # Map from user id to User
     self._all_users = {}
@@ -82,13 +75,13 @@ class UserManager:
   def get_user(self, user_id):
     return self._all_users.get(user_id)
 
-
-class Reservation(dict):
+class Reservation(object):
   def __init__(self, user_id, time_to_reserve, num_guest):
-    self['_reserver'] = user_id
-    self['_checkin_time'] = time_to_reserve
-    self['_num_guest'] = num_guest
-    self['_timestamp'] = time.time()
+    self.reserver = user_manager.get_user(user_id)
+    self.checkin_time = time_to_reserve
+    self.num_guest = num_guest
+    self.timestamp = time.time()
+
 
 user_manager = UserManager()
 
@@ -154,14 +147,11 @@ def verify():
 @app.route('/api/reservations/', methods=['GET'])
 def reservations():
   print queue
-  return json.dumps(queue)
+  return json.dumps(queue,default=lambda obj:obj.__dict__)
 
 
 @app.route('/message/', methods=['POST'])
 def message():
-  # name=request.args['yourname']
-  # email=request.args['youremail']
-  # print request.data
   data = xmltodict.parse(request.data)
   print data.get('FromUserName')
   # return render_template('args_action.html', name=name, email=email)
@@ -169,5 +159,14 @@ def message():
 
 
 if __name__ == "__main__":
-  app.run('0.0.0.0', 80, debug=True)
+  user_manager.process_user("odIgav434SsjB4x8ROU7BJWzI5IU")
+  user_manager.process_user("odIgav6fGLauJA1ukAtV_lGWWCPY")
+  user_manager.process_user("odIgavz5qd3QrLSHyK5nefTgyIH4")
+
+  add_to_reservation("odIgav434SsjB4x8ROU7BJWzI5IU", 1)
+  add_to_reservation("odIgav6fGLauJA1ukAtV_lGWWCPY", 2)
+  add_to_reservation("odIgavz5qd3QrLSHyK5nefTgyIH4", 3)
+
+  app.run('0.0.0.0', 5000, debug=True)
+
   # app.run('0.0.0.0', 80)
