@@ -1,6 +1,6 @@
 import os
-import time
 
+import time
 import xmltodict
 from flask import Flask, request, send_from_directory
 
@@ -85,6 +85,7 @@ class UserManager(object):
   def process_new_user(self, user_id):
     if user_id not in self._all_users:
       self._all_users[user_id] = User(id=user_id)
+      return self._all_users[user_id]
 
   def process_existing_user(self, user):
     self._all_users[user.get_id()] = user
@@ -99,11 +100,12 @@ class Reservation(object):
     self.checkin_time = time_to_reserve
     self.num_guest = num_guest
     self.timestamp = time.time()
+    self.id = "{}_{}_{}".format(user_id, num_guest, self.timestamp)
+
     # self.id = hashlib.sha1("{}{}{}".format(user_id, time_to_reserve, num_guest)).hexdigest()
 
 
 user_manager = UserManager()
-
 queue = []
 
 
@@ -159,11 +161,31 @@ def verify():
     return "fail"
 
 
-@app.route('/api/reservations/', methods=['GET'])
+@app.route('/api/reservations/', methods=['GET', 'POST'])
 def reservations():
-  print queue
-  return json.dumps(queue, default=lambda obj: obj.__dict__)
+  if request.method == 'GET':
+    print queue
+    return json.dumps(queue, default=lambda obj: obj.__dict__)
+  # elif request.method == 'POST':
+  #   print request.data
+  #   return "hello"
 
+
+
+@app.route('/api/reservations/ops', methods=['POST'])
+def reservation_ops():
+  def delete(reservation_id, a_queue):
+    for reservation in a_queue:
+      if reservation.id == reservation_id:
+        a_queue.remove(reservation)
+
+  op_name_to_methods = {
+    'delete': delete
+  }
+  method = op_name_to_methods[request.form['op']]
+  method(request.form['id'], queue)
+
+  return "hello"
 
 @app.route('/message/', methods=['POST'])
 def message():
@@ -181,8 +203,7 @@ if __name__ == "__main__":
       user = User(data=user_data)
       user_manager.process_existing_user(user)
     else:
-      user_manager.process_new_user(user_id)
-      user = user_manager.get_user(user_id)
+      user = user_manager.process_new_user(user_id)
       db.user.save(user)
 
     add_to_reservation(user_id, 2)
