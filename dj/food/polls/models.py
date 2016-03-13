@@ -22,3 +22,21 @@ class Choice(models.Model):
 
   def __str__(self):
     return self.choice_text
+
+
+class WechatUesr(models.Model):
+  openid = models.CharField(max_length=200, primary_key=True)
+  city = models.CharField(max_length=200)
+  country = models.CharField(max_length=200)
+  nickname = models.CharField(max_length=200)
+  groupId = models.IntegerField
+
+  def from_json(self, json_data):
+    self.openid = json_data['openid']
+    self.city = json_data['city']
+    self.country = json_data['country']
+    self.groupId = json_data['groupid']
+    self.nickname = json_data['nickname']
+
+  def __str__(self):
+    return self.nickname

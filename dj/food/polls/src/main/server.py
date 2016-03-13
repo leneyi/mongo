@@ -4,7 +4,7 @@ import time
 import xmltodict
 from flask import Flask, request, send_from_directory
 
-from jsonInDB import *
+# from jsonInDB import *
 from run import wechat
 
 app = Flask(__name__)
@@ -204,7 +204,7 @@ if __name__ == "__main__":
       user_manager.process_existing_user(user)
     else:
       user = user_manager.process_new_user(user_id)
-      db.user.save(user)
+      # db.user.save(user)
 
     add_to_reservation(user_id, 2)
 
