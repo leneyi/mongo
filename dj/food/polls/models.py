@@ -29,14 +29,24 @@ class WechatUesr(models.Model):
   city = models.CharField(max_length=200)
   country = models.CharField(max_length=200)
   nickname = models.CharField(max_length=200)
-  groupId = models.IntegerField
+  groupId = models.IntegerField(default=0)
 
   def from_json(self, json_data):
     self.openid = json_data['openid']
     self.city = json_data['city']
     self.country = json_data['country']
-    self.groupId = json_data['groupid']
+    self.groupid = json_data['groupid']
     self.nickname = json_data['nickname']
 
   def __str__(self):
     return self.nickname
+
+
+class Reservation(models.Model):
+  reserver = models.ForeignKey(WechatUesr)
+  arrival_time = models.DateTimeField('ETA')
+  guest_num = models.IntegerField(default=0)
+  created = models.DateTimeField(auto_now_add=True)
+
+  def __str__(self):
+    return "{}, {}, {}".format(self.reserver, self.guest_num, self.arrival_time)
