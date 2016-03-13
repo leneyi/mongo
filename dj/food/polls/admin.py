@@ -6,4 +6,4 @@ from .models import *
 admin.site.register(Question)
 admin.site.register(Choice)
 admin.site.register(Reservation)
-admin.site.register(WechatUesr)
+admin.site.register(WechatUser)

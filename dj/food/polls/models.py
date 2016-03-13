@@ -24,7 +24,7 @@ class Choice(models.Model):
     return self.choice_text
 
 
-class WechatUesr(models.Model):
+class WechatUser(models.Model):
   openid = models.CharField(max_length=200, primary_key=True)
   city = models.CharField(max_length=200)
   country = models.CharField(max_length=200)
@@ -43,7 +43,7 @@ class WechatUesr(models.Model):
 
 
 class Reservation(models.Model):
-  reserver = models.ForeignKey(WechatUesr)
+  reserver = models.ForeignKey(WechatUser)
   arrival_time = models.DateTimeField('ETA')
   guest_num = models.IntegerField(default=0)
   created = models.DateTimeField(auto_now_add=True)

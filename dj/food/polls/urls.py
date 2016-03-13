@@ -19,16 +19,16 @@ def initialize():
     # user = user_manager.process_new_user(user_id)
     # pprint(user)
     try:
-      existing_user = models.WechatUesr.objects.get(pk=user_id)
+      existing_user = models.WechatUser.objects.get(pk=user_id)
       print "existing: ", existing_user
     except ObjectDoesNotExist:
-      new_user = models.WechatUesr()
+      new_user = models.WechatUser()
       new_user.from_json(wechat.get_user_info(user_id))
       new_user.save()
       print "new: ", new_user
 
   # Make up reservations
-  for user in models.WechatUesr.objects.all():
+  for user in models.WechatUser.objects.all():
     reservation = models.Reservation.objects.filter(reserver=user.openid)
     if reservation:
       print "existing: ", reservation
