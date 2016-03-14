@@ -9,6 +9,7 @@ from . import views
 
 urlpatterns = [
   url(r'^$', views.index, name='index'),
+  url(r'^api/(?P<model>.+)', views.api, name='api'),
 ]
 
 
