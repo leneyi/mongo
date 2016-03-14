@@ -12,5 +12,5 @@ pip install -r wechat_app/requirements.txt
 ```
 source venv/bin/activate
 cd wechat_app/dj/food
-./manage.py runserver
+sudo $(which python) manage.py runserver 0.0.0.0:80
 ```
