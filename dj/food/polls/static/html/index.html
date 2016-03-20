@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>排位助手</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="css/simple-sidebar.css" rel="stylesheet">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+<body>
+
+<div id="wrapper">
+
+    <!-- Sidebar -->
+    <div id="sidebar-wrapper">
+        <ul class="sidebar-nav">
+            <li class="sidebar-brand">
+                <a href="#">
+                    Start Bootstrap
+                </a>
+            </li>
+            <li>
+                <a href="#">Dashboard</a>
+            </li>
+            <li>
+                <a href="#">Shortcuts</a>
+            </li>
+            <li>
+                <a href="#">Overview</a>
+            </li>
+            <li>
+                <a href="#">Events</a>
+            </li>
+            <li>
+                <a href="#">About</a>
+            </li>
+            <li>
+                <a href="#">Services</a>
+            </li>
+            <li>
+                <a href="#">Contact</a>
+            </li>
+        </ul>
+    </div>
+    <!-- /#sidebar-wrapper -->
+
+    <!-- Page Content -->
+    <div id="page-content-wrapper">
+        <!--<div class="container-fluid">-->
+        <!--<div class="row">-->
+        <!--<div class="col-lg-12">-->
+        <!--<h1>Simple Sidebar</h1>-->
+
+        <!--<p>This template has a responsive menu toggling system. The menu will appear collapsed on smaller-->
+        <!--screens, and will appear non-collapsed on larger screens. When toggled using the button below,-->
+        <!--the menu will appear/disappear. On small screens, the page content will be pushed off-->
+        <!--canvas.</p>-->
+
+        <!--<p>Make sure to keep all page content within the <code>#page-content-wrapper</code>.</p>-->
+        <!--<a href="#menu-toggle" class="btn btn-default" id="menu-toggle">Toggle Menu</a>-->
+        <!--</div>-->
+        <!--</div>-->
+        <!--</div>-->
+
+
+        <div class="container-fluid">
+            <h1>预定情况</h1>
+            <table id="queue_table" class="table table-striped">
+                <thead>
+                <tr>
+                    <th>顾客</th>
+                    <th>人数</th>
+                    <th>时间</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>John</td>
+                    <td>Doe</td>
+                    <td>john@example.com</td>
+                </tr>
+                <tr>
+                    <td>Mary</td>
+                    <td>Moe</td>
+                    <td>mary@example.com</td>
+                </tr>
+                <tr>
+                    <td>July</td>
+                    <td>Dooley</td>
+                    <td>july@example.com</td>
+                </tr>
+                </tbody>
+            </table>
+            <a href="#menu-toggle" class="btn btn-default" id="menu-toggle">Toggle Menu</a>
+
+        </div>
+    </div>
+    <!-- /#page-content-wrapper -->
+
+</div>
+<!-- /#wrapper -->
+
+<!-- jQuery -->
+<script src="js/jquery.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="js/bootstrap.min.js"></script>
+
+<script>
+    $.getJSON("api/reservations/", function (data) {
+        console.log(data)
+        $("#queue_table > tbody").empty()
+
+        for (var i = 0; i < data.length; i++) {
+            var item = data[i];
+            var myDate = new Date(item.timestamp * 1000);
+            var tr = $('<tr>').append(
+                    $('<td>').text(item.reserver.nickname),
+                    $('<td>').text(item.num_guest),
+                    $('<td>').text(myDate.toLocaleString())
+            );
+            tr.attr("id", item.id); //Reservation id
+            tr.click(reservation_row_onclick)
+            $("#queue_table > tbody").append(tr);
+        }
+    });
+
+</script>
+<!-- Menu Toggle Script -->
+<script>
+    edit_row_prefix = 'edit_';
+
+    $("#menu-toggle").click(function (e) {
+        e.preventDefault();
+        $("#wrapper").toggleClass("toggled");
+    });
+
+    function reservation_row_onclick() {
+        var reservation_id = $(this).attr('id');
+        var existing_edit_row = $(".edit_row");
+        if (existing_edit_row.length > 0) {
+            existing_edit_row.remove();
+        }
+        if ($("#" + edit_row_prefix + reservation_id).length > 0) {
+            return;
+        }
+
+        var button_del = $('<button>')
+                .text("删除")
+                .attr('class', 'btn-danger btn btn-group-sm')
+                .attr('id', reservation_id)
+                .click(remove_reservation);
+        var button_edit = $('<button>').text("更改").attr('class', 'btn-primary btn btn-group-sm').attr('id', reservation_id);
+
+        var edit_row = $('<tr>')
+                .append(button_edit, button_del)
+                .attr('id', edit_row_prefix + reservation_id)
+                .addClass('edit_row');
+        $(this).after(edit_row)
+    }
+
+    function remove_reservation(){
+//        console.log($(this).attr('id'));
+        var reservation_id = $(this).attr('id');
+        $.post( "api/reservations/ops", { 'op':'delete', 'id': reservation_id}, function(result, status) {
+            if (status == "success") {
+                location.reload();
+            }
+            
+            console.log(status, result);
+        })
+
+    }
+
+
+</script>
+
+
+</body>
+
+</html>
