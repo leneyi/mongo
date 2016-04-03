@@ -46,6 +46,9 @@ class WechatUser(models.Model):
     self.groupid = json_data['groupid']
     self.nickname = json_data['nickname']
 
+  def get_nickname(self):
+    return self.nickname
+
   def __str__(self):
     return self.nickname
 
@@ -75,5 +78,8 @@ class Reservation(models.Model):
   def get_time(self):
     return self.arrival_time
 
+  def get_reserver(self):
+    return self.reserver
+
   def __str__(self):
-    return "{}, {}, {}".format(self.reserver, self.guest_num, self.arrival_time)
+    return "{} guests at {} under {}.".format(self.guest_num, timezone.localtime(self.arrival_time), self.reserver.get_nickname())

@@ -30,7 +30,7 @@
     <fieldset class="form-group">
         <label>人数</label>
         <label class="radio-inline">
-            <input type="radio" name="guest_nu" value="1"> 1
+            <input type="radio" name="guest_num" value="1"> 1
         </label>
         <label class="radio-inline">
             <input type="radio" name="guest_num" value="2"> 2
@@ -53,9 +53,6 @@
         <label class="radio-inline">
             <input type="radio" name="guest_num" value="8"> 8
         </label>
-        <label class="radio-inline">
-            <input type="radio" name="guest_num" value="X"> 更多
-        </label>
     </fieldset>
 
     <fieldset class="form-group" id="time_slot">
@@ -71,9 +68,10 @@
     </fieldset>
 
     <fieldset class="form-group">
-        <label>Wechat User ID</label>
         <input type="text" class="form-control" name="openid" id="openid">
-        <button type="submit" formmethod="post" formaction="http://wechat.grabbieteam.com/polls/reserve" class="btn btn-primary">Submit</button>
+        <button type="submit" formmethod="post" formaction="http://wechat.grabbieteam.com/polls/reserve"
+                class="btn btn-primary">提交
+        </button>
     </fieldset>
 </form>
 </body>
@@ -98,7 +96,9 @@
             alert("Wechat ID not found.")
         }
         else {
-            $("#openid").val(openid);
+            var openid_field = $("#openid");
+            openid_field.val(openid);
+            openid_field.hide();
         }
 
         $(".radio-inline").change(function () {
@@ -108,9 +108,12 @@
                 time_slot.empty();
                 for (var i = 0; i < data.length; i++) {
                     var date_string = data[i];
+                    var time = new Date(date_string)
+                    var display_time = time.getHours() + ':' + time.getMinutes()
+                    console.log(time, time.getHours(), time.getMinutes())
                     var label = $('<label>')
                             .addClass("time_slot_class")
-                            .text(date_string)
+                            .text(display_time)
                             .append($('<input>')
                                     .attr("name", "time")
                                     .attr("type", "radio")

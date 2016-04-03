@@ -1,21 +1,20 @@
+import datetime
 import json
 import textwrap
 import time
-from threading import Thread
+from pprint import pprint
 
-import datetime
-
+from django.core import serializers
 from django.core.serializers.json import DjangoJSONEncoder
+from django.http import HttpResponse
+from django.utils import timezone
+from django.utils.dateparse import parse_datetime
+from django.views.decorators.http import require_http_methods
 
+from polls import models
+from polls.util import async_send_message
 from src.main.run import wechat
 from src.main.server import WechatData
-from pprint import pprint
-from django.http import HttpResponse
-from django.shortcuts import render
-from django.core import serializers
-from django.views.decorators.http import require_http_methods
-from . import models
-from django.utils import timezone
 
 
 def index(request):
@@ -48,27 +47,29 @@ class HourMinuteSerializer(json.JSONEncoder):
 def reserve(request):
   print(request.POST)
   try:
-    (hour, minute) = request.POST['time'].split(":")
+    time_str = request.POST['time']
     guest_num = request.POST['guest_num']
     openid = request.POST['openid']
-    print(hour, minute)
   except KeyError:
     return HttpResponse("Invalid form!")
   else:
-    reserve_time = timezone.now()
-    new_time = reserve_time.replace(hour=int(hour), minute=int(minute), second=0, microsecond=0)
-    # print(new_time)
+    new_time = parse_datetime(time_str)
+    print(new_time)
     try:
       user = models.WechatUser.objects.get(pk=openid)
       reservations = models.Reservation.objects.filter(reserver=user)
       if len(reservations) > 0:
         reservation = reservations[0]
-        return HttpResponse("You already had a reservation at {} with {} guests.".format(reservation.get_time(),
-                                                                                         reservation.get_guest_num()))
-
+        return HttpResponse(
+          "Reservation already exists: {}, Please type 'Cancel' in chat before making another reservation.".format(
+            reservation))
       new_reservation = models.Reservation(reserver=user, arrival_time=new_time, guest_num=guest_num)
-
       new_reservation.save()
+
+      async_send_message(user.get_id(),
+                         "Reservation is confirmed for {} with {} guests at {}".format(user.get_nickname(),
+                                                                                       new_reservation.get_guest_num(),
+                                                                                       new_reservation.get_time()))
       return HttpResponse("Thank you!")
     except models.WechatUser.DoesNotExist:
       return HttpResponse("User not found!")
@@ -78,12 +79,12 @@ def api(request, model):
   from_time = request.GET.get('time')
   if model == models.Reservation.__name__ and from_time == 'fromNow':
     # TODO: Make sure options are are within the same day, or some way to distinguish them.
-    now = datetime.datetime.now()
+    now = timezone.now()
     incoming_quarter = ceil_dt(now)
     options = [incoming_quarter + datetime.timedelta(seconds=900 * i) for i in range(8)]
     # output = ["{}:{}".format(t.hour, t.min) for t in options]
     print(now, options)
-    return HttpResponse(json.dumps(options, cls=HourMinuteSerializer))
+    return HttpResponse(json.dumps(options, cls=DjangoJSONEncoder))
   # print question_id
   print "Model:", model
   reservations = models.__dict__[model].objects.all()
@@ -98,7 +99,6 @@ def verify(request):
   signature = request.GET.get('signature')
   nonce = request.GET.get('nonce')
   pprint(request.GET)
-  # pprint(request.body)
   if wechat.check_signature(signature=signature, timestamp=timestamp, nonce=nonce):
     print "valid request"
     echostr = request.GET.get('echostr')
@@ -109,15 +109,16 @@ def verify(request):
     else:
       # request.body contains the message xml
       msg = WechatData(request.body)
-      # process_msg(msg)
-      if msg.is_text_msg() or msg.is_subscribe_event():
-        async_send_message(msg.get_from_user_name(),
-                           "http://wechat.grabbieteam.com/static/html/reserve.html?openid={}".format(
-                             msg.get_from_user_name()))
+      process_msg(msg)
       return HttpResponse(" ")
   else:
     print "invalid request"
     return HttpResponse(status=406)
+
+
+def get_reserve_url(msg):
+  return "Please make a reservation at: http://wechat.grabbieteam.com/static/html/reserve.html?openid={}".format(
+    msg.get_from_user_name())
 
 
 def get_help_command():
@@ -127,34 +128,26 @@ def get_help_command():
 
 
 def process_msg(msg):
-  ERROR_MSG = "Unrecognized command. Please make sure to type a number."
-
-  def try_to_reserve(msg, user):
-    try:
-      num_guest = int(msg.get_content())
-    except ValueError:
-      async_send_message(user.get_id(), "{}\n{}".format(ERROR_MSG, get_help_command()))
+  openid = msg.get_from_user_name()
+  if msg.is_text_msg():
+    if msg.get_content().lower() == 'cancel':
+      try:
+        user = models.WechatUser.objects.get(pk=openid)
+      except models.WechatUser.DoesNotExist:
+        print("user not found.")
+      else:
+        cancel_msg = "Reservation cancelled: "
+        for r in user.reservation_set.all():
+          cancel_msg = "{}{}".format(cancel_msg, r)
+          r.delete()
+        async_send_message(openid, cancel_msg)
+    elif msg.is_subscribe_event():
+      async_send_message(openid, get_reserve_url(msg))
     else:
-      async_send_message(user.get_id(), "What time?")
-
-  print("from open id: {}".format(msg.get_from_user_name()))
-  user = models.WechatUser.objects.get(pk=msg.get_from_user_name())
-
-  state_to_func = {models.Status.INIT: try_to_reserve}
-
-  state_to_func[user.get_state()](msg, user)
+      async_send_message(openid, get_reserve_url(msg))
 
 
 def print_func(times):
   for i in range(times):
     print "hi there!"
     time.sleep(1)
-
-
-def async_send_message(open_id, text):
-  t = Thread(target=send_message, args=(open_id, text))
-  t.start()
-
-
-def send_message(username, text):
-  wechat.send_text_message(username, text)
