@@ -70,7 +70,7 @@ def reserve(request):
                          "Reservation is confirmed for {} with {} guests at {}".format(user.get_nickname(),
                                                                                        new_reservation.get_guest_num(),
                                                                                        new_reservation.get_time()))
-      return HttpResponse("Thank you!")
+      return HttpResponse("Reservation {} has been made. Thank you!".format(new_reservation))
     except models.WechatUser.DoesNotExist:
       return HttpResponse("User not found!")
 
