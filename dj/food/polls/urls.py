@@ -11,6 +11,7 @@ urlpatterns = [
   url(r'^$', views.index, name='index'),
   url(r'^verify', views.verify, name='verify'),
   url(r'^api/(?P<model>.+)', views.api, name='api'),
+  url(r'^reserve', views.reserve, name='reserve'),
 ]
 
 
@@ -34,10 +35,11 @@ def initialize():
     reservation = models.Reservation.objects.filter(reserver=user.openid)
     if reservation:
       print "existing: ", reservation
-    else:
-      reservation = models.Reservation(reserver=user, arrival_time=timezone.now(), guest_num=4)
-      reservation.save()
-      print "new:", reservation
+      reservation.delete()
+    # else:
+    #   reservation = models.Reservation(reserver=user, arrival_time=timezone.now(), guest_num=4)
+    #   reservation.save()
+    #   print "new:", reservation
 
 print "starting up"
 

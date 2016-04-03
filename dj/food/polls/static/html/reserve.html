@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>排位助手</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="css/simple-sidebar.css" rel="stylesheet">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+<body>
+<form>
+    <fieldset class="form-group">
+        <label>人数</label>
+        <label class="radio-inline">
+            <input type="radio" name="guest_nu" value="1"> 1
+        </label>
+        <label class="radio-inline">
+            <input type="radio" name="guest_num" value="2"> 2
+        </label>
+        <label class="radio-inline">
+            <input type="radio" name="guest_num" value="3"> 3
+        </label>
+        <label class="radio-inline">
+            <input type="radio" name="guest_num" value="4"> 4
+        </label>
+        <label class="radio-inline">
+            <input type="radio" name="guest_num" value="5"> 5
+        </label>
+        <label class="radio-inline">
+            <input type="radio" name="guest_num" value="6"> 6
+        </label>
+        <label class="radio-inline">
+            <input type="radio" name="guest_num" value="7"> 7
+        </label>
+        <label class="radio-inline">
+            <input type="radio" name="guest_num" value="8"> 8
+        </label>
+        <label class="radio-inline">
+            <input type="radio" name="guest_num" value="X"> 更多
+        </label>
+    </fieldset>
+
+    <fieldset class="form-group" id="time_slot">
+        <label>时间</label>
+
+        <div id="time_slot_div">
+
+            <label class="XXX">
+                <input type="radio" name="inlineRadioOptions" value="X" disabled=disabled> 请先选择人数
+            </label>
+        </div>
+
+    </fieldset>
+
+    <fieldset class="form-group">
+        <label>Wechat User ID</label>
+        <input type="text" class="form-control" name="openid" id="openid">
+        <button type="submit" formmethod="post" formaction="http://wechat.grabbieteam.com/polls/reserve" class="btn btn-primary">Submit</button>
+    </fieldset>
+</form>
+</body>
+<!-- jQuery -->
+<script src="js/jquery.js"></script>
+
+<!-- Bootstrap Core JavaScript -->
+<script src="js/bootstrap.min.js"></script>
+<script>
+    $.urlParam = function (name) {
+        var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+        if (results == null) {
+            return null;
+        } else {
+            return results[1] || 0;
+        }
+    }
+
+    $(function () {
+        var openid = $.urlParam('openid');
+        if (openid == null) {
+            alert("Wechat ID not found.")
+        }
+        else {
+            $("#openid").val(openid);
+        }
+
+        $(".radio-inline").change(function () {
+            $.getJSON("http://wechat.grabbieteam.com/polls/api/Reservation?time=fromNow", function (data) {
+                console.log(data);
+                var time_slot = $("#time_slot_div");
+                time_slot.empty();
+                for (var i = 0; i < data.length; i++) {
+                    var date_string = data[i];
+                    var label = $('<label>')
+                            .addClass("time_slot_class")
+                            .text(date_string)
+                            .append($('<input>')
+                                    .attr("name", "time")
+                                    .attr("type", "radio")
+                                    .val(date_string));
+                    time_slot.append(label);
+                }
+            });
+        })
+    });
+</script>
+</html>
