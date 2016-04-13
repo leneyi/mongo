@@ -14,6 +14,7 @@ from . import views
 
 urlpatterns = [
   url(r'^$', views.index, name='index'),
+#  url(r'^$', views.IndexView.as_view(), name='index'),
   url(r'^verify', views.verify, name='verify'),
   url(r'^api/(?P<model>.+)', views.api, name='api'),
   url(r'^reserve', views.reserve, name='reserve'),

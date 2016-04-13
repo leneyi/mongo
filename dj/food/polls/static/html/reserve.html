@@ -26,7 +26,11 @@
 
 </head>
 <body>
+<div class="container">
+    <div id="header" style="background-color:#ADD8E6;">
+    <h2 style="margin-bottom:0;">请提供排位信息</h1></div>
 <form>
+    <div class="container">
     <fieldset class="form-group">
         <label>人数</label>
         <label class="radio-inline">
@@ -54,7 +58,9 @@
             <input type="radio" name="guest_num" value="8"> 8
         </label>
     </fieldset>
-
+    </div><!-- container-->
+    
+    <div class="container">
     <fieldset class="form-group" id="time_slot">
         <label>时间</label>
 
@@ -66,14 +72,18 @@
         </div>
 
     </fieldset>
-
+    </div>
+    
+    <div class="container">
     <fieldset class="form-group">
         <input type="text" class="form-control" name="openid" id="openid">
         <button type="submit" formmethod="post" formaction="http://wechat.grabbieteam.com/polls/reserve"
                 class="btn btn-primary">提交
         </button>
     </fieldset>
+    </div>
 </form>
+</div>
 </body>
 <!-- jQuery -->
 <script src="js/jquery.js"></script>

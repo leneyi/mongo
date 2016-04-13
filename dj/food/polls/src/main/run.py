@@ -6,8 +6,8 @@ from wechat_sdk.messages import TextMessage
 import pprint
 conf = WechatConf(
     token='7dea228d326c649d',
-    appid='wx46e9cb89af73b9c1',
-    appsecret='7dea228d326c649d71fad69f18ecd7d2',
+    appid='wxbacad941f116ba40',
+    appsecret='b704d7727c325c772bc5b067499da06e',
     encrypt_mode='compatible',
     #encoding_aes_key='your_encoding_aes_key'
 )

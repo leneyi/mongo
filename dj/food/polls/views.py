@@ -3,11 +3,14 @@ import json
 import textwrap
 import time
 from pprint import pprint
-
+#load template
+from django.template import loader
+from django.shortcuts import render
 from django.core import serializers
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse
 from django.utils import timezone
+from django.views import generic
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.http import require_http_methods
 
@@ -18,8 +21,8 @@ from src.main.server import WechatData
 
 
 def index(request):
-  return HttpResponse("Hello, world. You're at the polls index.")
-  # return render(request, 'hello.html')
+   print "hi"
+   return HttpResponse("Hello, world. You're at the polls index now.")
 
 
 def ceil_dt(dt):
